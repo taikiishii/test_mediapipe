@@ -9,6 +9,15 @@ import mediapipe as mp
 from mediapipe.tasks.python import vision
 import numpy as np
 import argparse
+import os
+
+# モデルファイルの保存ディレクトリ
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.path.join(SCRIPT_DIR, 'models')
+
+# modelsディレクトリが存在しない場合は作成
+if not os.path.exists(MODEL_DIR):
+    os.makedirs(MODEL_DIR)
 
 
 def draw_pose_landmarks(image, landmarks):
@@ -191,7 +200,8 @@ def draw_gesture_landmarks(image, hand_landmarks_list, gestures_list, handedness
 def run_pose_detection(args):
     """姿勢検出モード"""
     # PoseLandmarkerオプション
-    base_options = mp.tasks.BaseOptions(model_asset_path='/tmp/pose_landmarker_heavy.task')
+    model_path = os.path.join(MODEL_DIR, 'pose_landmarker_heavy.task')
+    base_options = mp.tasks.BaseOptions(model_asset_path=model_path)
     options = vision.PoseLandmarkerOptions(
         base_options=base_options,
         output_segmentation_masks=False
@@ -210,7 +220,7 @@ def run_pose_detection(args):
     
     print(f"姿勢検出モード開始")
     print(f"フレームサイズ: {frame_width}x{frame_height}, FPS: {fps}")
-    print("'q'キーで終了、'm'キーで顔検出に切り替え、'h'キーで手検出に切り替え、'g'キーでジェスチャー認識に切り替え\n")
+    print("'q'キーで終了、'f'キーで顔検出に切り替え、'h'キーで手検出に切り替え、'g'キーでジェスチャー認識に切り替え\n")
     
     frame_count = 0
     
@@ -242,13 +252,13 @@ def run_pose_detection(args):
                 else:
                     cv2.putText(frame, "No pose detected", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
                 
-                cv2.putText(frame, "Pose Detection | Press 'q' to quit, 'm' for face, 'h' for hand, 'g' for gesture", (10, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                cv2.putText(frame, "Pose Detection | Press 'q' to quit, 'f' for face, 'h' for hand, 'g' for gesture", (10, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 cv2.imshow("MediaPipe Detection", frame)
                 
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'):
                     break
-                elif key == ord('m'):
+                elif key == ord('f'):
                     cv2.destroyAllWindows()
                     cap.release()
                     run_face_detection(args)
@@ -264,6 +274,19 @@ def run_pose_detection(args):
                     run_gesture_detection(args)
                     return
     
+    except Exception as e:
+        print(f"エラー: {e}")
+        print("\n姿勢検出モデルをダウンロード中...")
+        import urllib.request
+        url = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task'
+        model_path = os.path.join(MODEL_DIR, 'pose_landmarker_heavy.task')
+        try:
+            urllib.request.urlretrieve(url, model_path)
+            print("✓ モデルをダウンロードしました")
+            print("もう一度実行してください")
+        except Exception as e2:
+            print(f"✗ ダウンロード失敗: {e2}")
+    
     finally:
         cap.release()
         cv2.destroyAllWindows()
@@ -273,7 +296,8 @@ def run_pose_detection(args):
 def run_face_detection(args):
     """顔検出モード"""
     # FaceLandmarkerオプション
-    base_options = mp.tasks.BaseOptions(model_asset_path='/tmp/face_landmarker.task')
+    model_path = os.path.join(MODEL_DIR, 'face_landmarker.task')
+    base_options = mp.tasks.BaseOptions(model_asset_path=model_path)
     options = vision.FaceLandmarkerOptions(
         base_options=base_options,
         output_face_blendshapes=False,
@@ -348,8 +372,9 @@ def run_face_detection(args):
         print("\n顔検出モデルをダウンロード中...")
         import urllib.request
         url = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
+        model_path = os.path.join(MODEL_DIR, 'face_landmarker.task')
         try:
-            urllib.request.urlretrieve(url, '/tmp/face_landmarker.task')
+            urllib.request.urlretrieve(url, model_path)
             print("✓ モデルをダウンロードしました")
             print("もう一度実行してください")
         except Exception as e2:
@@ -364,7 +389,8 @@ def run_face_detection(args):
 def run_hand_detection(args):
     """手検出モード"""
     # HandLandmarkerオプション
-    base_options = mp.tasks.BaseOptions(model_asset_path='/tmp/hand_landmarker.task')
+    model_path = os.path.join(MODEL_DIR, 'hand_landmarker.task')
+    base_options = mp.tasks.BaseOptions(model_asset_path=model_path)
     options = vision.HandLandmarkerOptions(
         base_options=base_options,
         num_hands=2
@@ -438,8 +464,9 @@ def run_hand_detection(args):
         print("\n手検出モデルをダウンロード中...")
         import urllib.request
         url = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
+        model_path = os.path.join(MODEL_DIR, 'hand_landmarker.task')
         try:
-            urllib.request.urlretrieve(url, '/tmp/hand_landmarker.task')
+            urllib.request.urlretrieve(url, model_path)
             print("✓ モデルをダウンロードしました")
             print("もう一度実行してください")
         except Exception as e2:
@@ -454,7 +481,8 @@ def run_hand_detection(args):
 def run_gesture_detection(args):
     """ジェスチャー認識モード"""
     # GestureRecognizerオプション
-    base_options = mp.tasks.BaseOptions(model_asset_path='/tmp/gesture_recognizer.task')
+    model_path = os.path.join(MODEL_DIR, 'gesture_recognizer.task')
+    base_options = mp.tasks.BaseOptions(model_asset_path=model_path)
     options = vision.GestureRecognizerOptions(base_options=base_options)
     
     # Webカメラの初期化
@@ -530,8 +558,9 @@ def run_gesture_detection(args):
         print("\nジェスチャー認識モデルをダウンロード中...")
         import urllib.request
         url = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task'
+        model_path = os.path.join(MODEL_DIR, 'gesture_recognizer.task')
         try:
-            urllib.request.urlretrieve(url, '/tmp/gesture_recognizer.task')
+            urllib.request.urlretrieve(url, model_path)
             print("✓ モデルをダウンロードしました")
             print("もう一度実行してください")
         except Exception as e2:
