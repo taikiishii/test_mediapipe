@@ -10,6 +10,7 @@ from mediapipe.tasks.python import vision
 import numpy as np
 import argparse
 import os
+import time
 
 # モデルファイルの保存ディレクトリ
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -223,6 +224,8 @@ def run_pose_detection(args):
     print("'q'キーで終了、'f'キーで顔検出に切り替え、'h'キーで手検出に切り替え、'g'キーでジェスチャー認識に切り替え\n")
     
     frame_count = 0
+    start_time = time.time()
+    current_fps = 0
     
     try:
         with vision.PoseLandmarker.create_from_options(options) as landmarker:
@@ -235,6 +238,11 @@ def run_pose_detection(args):
                 frame_count += 1
                 frame = cv2.flip(frame, 1)
                 h, w, c = frame.shape
+                
+                # FPS計算
+                elapsed_time = time.time() - start_time
+                if elapsed_time > 0:
+                    current_fps = frame_count / elapsed_time
                 
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
@@ -251,6 +259,10 @@ def run_pose_detection(args):
                         cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 else:
                     cv2.putText(frame, "No pose detected", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                
+                # FPS表示
+                fps_text = f"FPS: {current_fps:.1f}"
+                cv2.putText(frame, fps_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 
                 cv2.putText(frame, "Pose Detection | Press 'q' to quit, 'f' for face, 'h' for hand, 'g' for gesture", (10, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 cv2.imshow("MediaPipe Detection", frame)
@@ -320,6 +332,8 @@ def run_face_detection(args):
     print("'q'キーで終了、'p'キーで姿勢検出に切り替え、'h'キーで手検出に切り替え、'g'キーでジェスチャー認識に切り替え\n")
     
     frame_count = 0
+    start_time = time.time()
+    current_fps = 0
     
     try:
         with vision.FaceLandmarker.create_from_options(options) as landmarker:
@@ -333,6 +347,11 @@ def run_face_detection(args):
                 frame = cv2.flip(frame, 1)
                 h, w, c = frame.shape
                 
+                # FPS計算
+                elapsed_time = time.time() - start_time
+                if elapsed_time > 0:
+                    current_fps = frame_count / elapsed_time
+                
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
                 
@@ -344,6 +363,10 @@ def run_face_detection(args):
                     cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 else:
                     cv2.putText(frame, "No face detected", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                
+                # FPS表示
+                fps_text = f"FPS: {current_fps:.1f}"
+                cv2.putText(frame, fps_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 
                 cv2.putText(frame, "Face Detection | Press 'q' to quit, 'p' for pose, 'h' for hand", (10, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
                 cv2.imshow("MediaPipe Detection", frame)
@@ -412,6 +435,8 @@ def run_hand_detection(args):
     print("'q'キーで終了、'p'キーで姿勢検出に切り替え、'f'キーで顔検出に切り替え、'g'キーでジェスチャー認識に切り替え\n")
     
     frame_count = 0
+    start_time = time.time()
+    current_fps = 0
     
     try:
         with vision.HandLandmarker.create_from_options(options) as landmarker:
@@ -425,6 +450,11 @@ def run_hand_detection(args):
                 frame = cv2.flip(frame, 1)
                 h, w, c = frame.shape
                 
+                # FPS計算
+                elapsed_time = time.time() - start_time
+                if elapsed_time > 0:
+                    current_fps = frame_count / elapsed_time
+                
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
                 
@@ -436,6 +466,10 @@ def run_hand_detection(args):
                     cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 else:
                     cv2.putText(frame, "No hand detected", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                
+                # FPS表示
+                fps_text = f"FPS: {current_fps:.1f}"
+                cv2.putText(frame, fps_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 
                 cv2.putText(frame, "Hand Detection | Press 'q' to quit, 'p' for pose, 'f' for face, 'g' for gesture", (10, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 cv2.imshow("MediaPipe Detection", frame)
@@ -501,6 +535,8 @@ def run_gesture_detection(args):
     print("'q'キーで終了、'p'キーで姿勢検出に切り替え、'f'キーで顔検出に切り替え、'h'キーで手検出に切り替え\n")
     
     frame_count = 0
+    start_time = time.time()
+    current_fps = 0
     
     try:
         with vision.GestureRecognizer.create_from_options(options) as recognizer:
@@ -513,6 +549,11 @@ def run_gesture_detection(args):
                 frame_count += 1
                 frame = cv2.flip(frame, 1)
                 h, w, c = frame.shape
+                
+                # FPS計算
+                elapsed_time = time.time() - start_time
+                if elapsed_time > 0:
+                    current_fps = frame_count / elapsed_time
                 
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
@@ -530,6 +571,10 @@ def run_gesture_detection(args):
                     cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 else:
                     cv2.putText(frame, "No gesture detected", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                
+                # FPS表示
+                fps_text = f"FPS: {current_fps:.1f}"
+                cv2.putText(frame, fps_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 
                 cv2.putText(frame, "Gesture Recognition | Press 'q' to quit, 'p' for pose, 'f' for face, 'h' for hand", (10, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 cv2.imshow("MediaPipe Detection", frame)
